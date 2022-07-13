@@ -464,7 +464,8 @@ class BertramWrapper:
         # add the word vectors for all words to the model's embedding matrix
         for word, embedding in embeddings.items():
             word_id = tokenizer.convert_tokens_to_ids(f"<BERTRAM:{word}>")
-            _get_embeddings_module(model).word_embeddings.weight[word_id] = embedding
+            with torch.no_grad():
+              _get_embeddings_module(model).word_embeddings.weight[word_id] = embedding
 
 
 def _get_embeddings_module(model: PreTrainedModel):
