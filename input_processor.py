@@ -23,6 +23,7 @@ import random
 import re
 import jsonpickle
 import torch
+import string
 
 import bertram
 import log
@@ -33,6 +34,7 @@ from ngram_models import NGramBuilder, NGramFeatures
 logger = log.get_logger('root')
 
 VOCAB_FILE_SUFFIX = '.vocab'
+punctuation = string.punctuation
 
 
 class RawInput:
@@ -277,8 +279,9 @@ class InputProcessor(AbstractInputProcessor):
         self.mode = mode
         self.form_only = form_only
         self.sep_symbol = sep_symbol
-
+        
         self.tokenizer = None  # type: Optional[PreTrainedTokenizer]
+        self.temp_tokenizer = None
         self.word_counts = None  # type: Optional[Dict[str,int]]
         self.word_embeddings = None  # type: Optional[Dict[str, np.ndarray]]
         self.ngram_builder = None  # type: Optional[NGramBuilder]
@@ -419,8 +422,21 @@ class InputProcessor(AbstractInputProcessor):
                     del context_tokens[-1]
 
     def _replace_word_with_mask(self, context: str, word: str) -> str:
-        words = context.split()
-        return ' '.join(self.tokenizer.mask_token if w == word else w for w in words)
+        words = self.temp_tokenizer.tokenize(context)
+        out_string = ""
+        prev = ""
+        for w in words:
+            if w[:2] == "##":
+                out_string += w[2:]
+            elif w == word:
+                out_string += " [MASK] "
+            else:
+                if w in punctuation or prev in "([-/":
+                    out_string += w
+                else:
+                    out_string += f" {w}"
+            prev = w
+        return out_string
 
     # noinspection PyCallingNonCallable
     def generate_processed_input(self, raw_input: RawInput, with_target: bool = False) -> ProcessedInput:
@@ -432,6 +448,9 @@ class InputProcessor(AbstractInputProcessor):
         target_vector = torch.tensor(self.word_embeddings[raw_input.word], dtype=torch.float) if with_target else None
 
         ngram_features = self.ngram_builder.get_ngram_features(raw_input.word, self.ngram_dropout)
+        
+        self.temp_tokenizer = bertram.MODELS[self.model_cls][1].from_pretrained(self.bert_model)
+        self.temp_tokenizer.add_special_tokens({"additional_special_tokens": [raw_input.word]})
 
         for context in raw_input.contexts:
 

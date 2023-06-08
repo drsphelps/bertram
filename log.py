@@ -18,6 +18,7 @@ names = set()
 
 def __setup_custom_logger(name: str) -> logging.Logger:
     formatter = logging.Formatter(fmt='%(asctime)s - %(levelname)s - %(module)s - %(message)s')
+    logging.basicConfig(filename='output.log',level=logging.DEBUG)
 
     names.add(name)
 

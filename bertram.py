@@ -449,11 +449,12 @@ class BertramWrapper:
         embeddings = {word: self.infer_vector(word, contexts) for word, contexts in words_with_contexts.items()}
 
         # register the new words as special tokens in the tokenizer
-        special_tokens = [f"<BERTRAM:{word}>" for word in embeddings.keys()]
-        tokenizer.add_special_tokens({"additional_special_tokens": special_tokens})
-
+        special_tokens = [word for word in embeddings.keys()]
+        special_tokens = list(set(special_tokens) - set(tokenizer.vocab.keys()))
+        tokenizer.add_tokens(special_tokens)
+        
         embedding_weight = _get_embeddings_module(model).word_embeddings.weight
-        max_id = max(tokenizer.additional_special_tokens_ids)
+        max_id = max(list(tokenizer.added_tokens_encoder.values()))
 
         # if necessary, extend the transformer's embedding matrix to account for the new word vectors
         if embedding_weight.shape[0] <= max_id:
@@ -463,7 +464,7 @@ class BertramWrapper:
 
         # add the word vectors for all words to the model's embedding matrix
         for word, embedding in embeddings.items():
-            word_id = tokenizer.convert_tokens_to_ids(f"<BERTRAM:{word}>")
+            word_id = tokenizer.convert_tokens_to_ids(word)
             with torch.no_grad():
               _get_embeddings_module(model).word_embeddings.weight[word_id] = embedding
 
