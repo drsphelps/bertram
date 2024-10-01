@@ -1,8 +1,10 @@
-export BERTRAM_MODEL="models/bertram-add-for-bert-base-english-uncased"
-export BERT_MODEL="bert-base-uncased"
-export OUTPUT_DIR="embedding-models/medical-terms-test/"
-export EXAMPLES_FOLDER="data/cui_examples/processed"
-export NO_EXAMPLES=150
+export BERTRAM_MODEL="models/bertram-add-for-bert-base-galician-cased"
+export BERT_MODEL="models/bgl"
+export OUTPUT_DIR="embedding-models/bgl-literal-embeddings"
+export EXAMPLES_FOLDER="data/idiom-defs/gl/literal"
+export NO_EXAMPLES=1
+
+mkdir -p $OUTPUT_DIR
 
 python3 bertram/train_embeddings.py \
    --bertram_model $BERTRAM_MODEL \

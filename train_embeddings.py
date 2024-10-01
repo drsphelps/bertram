@@ -21,7 +21,7 @@ def get_more_examples(idioms, examples_folder, n=10, lower=True):
             with open(f'{examples_folder}/{idi}.txt', 'r') as f:
                 lines = f.readlines()
                 if lower:
-                    lines = [li.lower().replace('/', ' ') for li in lines]
+                    lines = [f"{idi.lower()}: {li.lower().replace('/', ' ')}" for li in lines]
                 lines = [re.sub(f'{idi}', f' {formatted} ', li) for li in lines]
                 lines = [' '.join(li.split()) for li in lines]
                 examps[formatted] = random.sample(lines, k=min(len(lines), n))
